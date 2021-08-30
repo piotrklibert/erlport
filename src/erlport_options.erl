@@ -56,6 +56,7 @@
     | use_stdio
     | {compressed, 0..9}
     | {cd, Path :: string()}
+    | {stdout, redirect | pid()}
     | {packet, 1 | 2 | 4}
     | {start_timeout, pos_integer() | infinity}
     | {call_timeout, pos_integer() | infinity}
@@ -68,7 +69,8 @@
     | env
     | start_timeout
     | call_timeout
-    | buffer_size.
+    | buffer_size
+    | stdout.
 
 -export_type([option/0]).
 
@@ -138,6 +140,8 @@ parse({buffer_size, Size}=Value) ->
         false ->
             {error, {invalid_option, Value}}
     end;
+parse({stdout, Value}) ->
+    {ok, stdout, Value};
 parse(UnknownOption) ->
     {error, {unknown_option, UnknownOption}}.
 

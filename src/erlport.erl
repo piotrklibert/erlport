@@ -310,8 +310,12 @@ handle_incoming_message({'C', Id, Module, Function, Args, Context}, State)
     incoming_call(Id, Module, Function, Args, Context, State);
 handle_incoming_message({'M', Pid, Message}, State) ->
     send(Pid, Message, State);
-handle_incoming_message({'P', StdoutData}, State) ->
-    print(StdoutData, State);
+handle_incoming_message({'P', StdoutData}, #state{stdout=Stdout}=State) ->
+    case Stdout of
+        redirect -> print(StdoutData, State);
+        Pid -> Pid ! {stdout, StdoutData}
+    end,
+    {noreply, State};
 handle_incoming_message(Request, State) ->
     {stop, {invalid_protocol_message, Request}, State}.
 
@@ -388,8 +392,8 @@ call_mfa(Module, Function, Args) ->
                 when is_atom(Language) andalso is_atom(Type)
                 andalso is_list(Trace) ->
             {error, Error};
-        Type:Reason ->
-            Trace = erlang:get_stacktrace(),
+        Type:Reason:Trace ->
+            %% Trace = erlang:get_stacktrace(),
             {error, {erlang, Type, Reason, Trace}}
     end.
 
